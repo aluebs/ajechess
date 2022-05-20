@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Ajechess</title>
+    <script>
+      function rgb(color) {
+        return "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
+      }
+
+      function canvas2Array(cvs) {
+        var imgData = ctx.getImageData(0, 0, cvs.width, cvs.height).data;
+        var imgArray = new Array(cvs.width);
+        for (var i = 0; i < imgArray.length; ++i) {
+          imgArray[i] = new Array(cvs.height);
+          for (var j = 0; j < imgArray[i].length; ++j) {
+            imgArray[i][j] = new Array(3);
+            for (var k = 0; k < 3; ++k) {
+              imgArray[i][j][k] = imgData[4 * (i + j * cvs.width) + k];
+            }
+          }
+        }
+        return imgArray;
+      }
+
+      function array2Canvas(imgArray) {
+        var imgData = ctx.createImageData(imgArray.length, imgArray[0].length);
+        for (var i = 0; i < imgArray.length; ++i) {
+          for (var j = 0; j < imgArray[i].length; ++j) {
+            for (var k = 0; k < 3; ++k) {
+              imgData.data[4 * (i + j * imgArray.length) + k] =
+                imgArray[i][j][k];
+            }
+            imgData.data[4 * (i + j * imgArray.length) + 3] = 255;
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+      }
+
+      function loadReader(event) {
+        img = new Image();
+        img.onload = loadImage;
+        img.src = event.target.result;
+      }
+
+      function handleImage(e) {
+        ctx = c.getContext("2d");
+        var reader = new FileReader();
+        reader.onload = loadReader;
+        reader.readAsDataURL(e.files[0]);
+      }
+
+      function onload() {
+        c = document.getElementById("canvium");
+      }
+    </script>
+  </head>
+  <body onload="onload()">
+    <h1>Ajechess</h1>
+    <canvas id="canvium"></canvas>
+  </body>
+</html>
