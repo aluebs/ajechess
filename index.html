@@ -9,6 +9,7 @@
           this.image = "src/ajechess/iconos/" + (isWhite ? "blanco" : "negro")
             + "/" + image + ".png";
           this.jumps = [];
+          this.directions = [];
         }
       }
 
@@ -23,6 +24,7 @@
       class Bishop extends Piece {
         constructor(isWhite) {
           super(isWhite, "alfil");
+          this.directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
         }
       }
 
@@ -37,12 +39,15 @@
       class Rook extends Piece {
         constructor(isWhite) {
           super(isWhite, "torre");
+          this.directions = [[1, 0], [-1, 0], [0, 1], [0, -1]];
         }
       }
 
       class Queen extends Piece {
         constructor(isWhite) {
           super(isWhite, "dama");
+          this.directions = [[1, 1], [1, -1], [-1, 1], [-1, -1],
+            [1, 0], [-1, 0], [0, 1], [0, -1]];
         }
       }
 
@@ -113,9 +118,7 @@
           for (var j = 0; j < numCells; ++j) {
             var piece = board[i][j];
             if (piece) {
-              var jumps = piece.jumps;
-              for (var k = 0; k < jumps.length; ++k) {
-                jump = jumps[k];
+              for (jump of piece.jumps) {
                 jumpX = i + jump[0];
                 jumpY = j + jump[1];
                 if (jumpX >= 0 && jumpX < numCells
@@ -124,6 +127,24 @@
                     ++whiteThreat[jumpX][jumpY];
                   } else {
                     ++blackThreat[jumpX][jumpY];
+                  }
+                }
+              }
+              for (direction of piece.directions) {
+                for (var k = 1; k < numCells; ++k){
+                  dirX = i + k * direction[0];
+                  dirY = j + k * direction[1];
+                  if (dirX < 0 || dirX >= numCells
+                    || dirY < 0 || dirY >= numCells) {
+                    break;
+                  }
+                  if (piece.isWhite) {
+                    ++whiteThreat[dirX][dirY];
+                  } else {
+                    ++blackThreat[dirX][dirY];
+                  }
+                  if (board[dirX][dirY]) {
+                    break;
                   }
                 }
               }
