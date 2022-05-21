@@ -63,6 +63,23 @@
         return "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
       }
 
+      function mouseClickOnCanvas(event) {
+        var rect = c.getBoundingClientRect();
+        var i = Math.floor((event.clientX - rect.left) / cellWidth);
+        var j = Math.floor((event.clientY - rect.top) / cellWidth);
+        if (selected) {
+          var newPiece = board[selected[0]][selected[1]];
+          if (!board[i][j] || board[i][j].isWhite != newPiece.isWhite){
+            board[i][j] = newPiece;
+            board[selected[0]][selected[1]] = null;
+          }
+          selected = null;
+        } else if (board[i][j]) {
+          selected = [i, j];
+        }
+        updateBoard();
+      }
+
       function initBoard() {
         cellWidth = 64;
         numCells = 8;
@@ -70,9 +87,12 @@
         margin = 4;
         maxColor = 255;
         colorSlope = 32;
+        selectedWidth = 2;
+        regularWidth = 1;
         c = document.getElementById("canvium");
         c.width = numCells * cellWidth;
         c.height = numCells * cellWidth;
+        c.addEventListener("mousedown", mouseClickOnCanvas);
         ctx = c.getContext("2d");
         ctx.font = "16px monospace";
         board = [
@@ -93,6 +113,10 @@
           [new Rook(false), new Pawn(false), null, null,
             null, null, new Pawn(true), new Rook(true)]
         ];
+        selected = null;
+      }
+
+      function calculateThreat() {
         whiteThreat = [
           [0, 0, 0, 0, 0, 0, 0, 0],
           [0, 0, 0, 0, 0, 0, 0, 0],
@@ -113,9 +137,6 @@
           [0, 0, 0, 0, 0, 0, 0, 0],
           [0, 0, 0, 0, 0, 0, 0, 0]
         ];
-      }
-
-      function calculateThreat() {
         for (var i = 0; i < numCells; ++i) {
           for (var j = 0; j < numCells; ++j) {
             var piece = board[i][j];
@@ -170,14 +191,21 @@
           for (var j = 0; j < numCells; ++j) {
             var cellX = i * cellWidth;
             var cellY = j * cellWidth;
-            ctx.strokeRect(cellX, cellY, cellWidth, cellWidth);
             var wt = whiteThreat[i][j];
             var bt = blackThreat[i][j];
             ctx.fillStyle = rgb([
               maxColor - colorSlope * wt,
               maxColor - colorSlope * (wt + bt),
               maxColor - colorSlope * bt]);
-            ctx.fillRect(cellX + 1, cellY + 1, cellWidth - 2, cellWidth - 2);
+            ctx.fillRect(cellX, cellY, cellWidth, cellWidth);
+            if (selected && selected[0] == i && selected[1] == j) {
+              ctx.strokeStyle = rgb([0, maxColor, 0]);
+              ctx.lineWidth = selectedWidth;
+            } else {
+              ctx.strokeStyle = rgb([0, 0, 0]);
+              ctx.lineWidth = regularWidth;
+            }
+            ctx.strokeRect(cellX, cellY, cellWidth, cellWidth);
             var textX = cellX + margin;
             ctx.fillStyle = rgb([0, 0, maxColor]);
             ctx.fillText(wt.toString(), textX, cellY + cellWidth - margin);
@@ -193,10 +221,14 @@
         }
       }
 
-      function onload() {
-        initBoard();
+      function updateBoard() {
         calculateThreat();
         drawBoard();
+      }
+
+      function onload() {
+        initBoard();
+        updateBoard();
       }
     </script>
   </head>
