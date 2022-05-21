@@ -63,38 +63,20 @@
         return "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
       }
 
-      function mouseClickOnCanvas(event) {
-        var rect = c.getBoundingClientRect();
-        var i = Math.floor((event.clientX - rect.left) / cellWidth);
-        var j = Math.floor((event.clientY - rect.top) / cellWidth);
-        if (selected) {
-          var newPiece = board[selected[0]][selected[1]];
-          if (!board[i][j] || board[i][j].isWhite != newPiece.isWhite){
-            board[i][j] = newPiece;
-            board[selected[0]][selected[1]] = null;
-          }
-          selected = null;
-        } else if (board[i][j]) {
-          selected = [i, j];
-        }
-        updateBoard();
+      function emptyBoard() {
+        board = [
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+          [null, null, null, null, null, null, null, null],
+        ];
       }
 
-      function initBoard() {
-        cellWidth = 64;
-        numCells = 8;
-        fontSize = 16;
-        margin = 4;
-        maxColor = 255;
-        colorSlope = 32;
-        selectedWidth = 2;
-        regularWidth = 1;
-        c = document.getElementById("canvium");
-        c.width = numCells * cellWidth;
-        c.height = numCells * cellWidth;
-        c.addEventListener("mousedown", mouseClickOnCanvas);
-        ctx = c.getContext("2d");
-        ctx.font = "16px monospace";
+      function resetBoard() {
         board = [
           [new Rook(false), new Pawn(false), null, null,
             null, null, new Pawn(true), new Rook(true)],
@@ -113,7 +95,70 @@
           [new Rook(false), new Pawn(false), null, null,
             null, null, new Pawn(true), new Rook(true)]
         ];
+      }
+
+      function mouseClickOnCanvas(event) {
+        var rect = c.getBoundingClientRect();
+        var i = Math.floor((event.clientX - rect.left) / cellWidth);
+        var j = Math.floor((event.clientY - rect.top) / cellWidth);
+        var update = false;
+        if (i >= 0 && i < numCells && j >= 0 && j < numCells) {
+          if (selected) {
+            if (!board[i][j] || board[i][j].isWhite != selectedPiece.isWhite){
+              board[i][j] = selectedPiece;
+              board[selected[0]][selected[1]] = null;
+            }
+            selected = null;
+            selectedPiece = null;
+            update = true;
+          } else if (board[i][j]) {
+            selected = [i, j];
+            selectedPiece = board[i][j];
+            update = true;
+          }
+        } else {
+          if (selected) {
+            board[selected[0]][selected[1]] = null;
+            selected = null;
+            selectedPiece = null;
+            update = true;
+          } else if (i == emptyI && j == emptyJ) {
+            emptyBoard();
+            update = true;
+          } else if (i == resetI && j == resetJ) {
+            resetBoard();
+            update = true;
+          }
+        }
+        if (update) {
+          updateBoard();
+        }
+      }
+
+      function initBoard() {
+        cellWidth = 64;
+        numCells = 8;
+        fontSize = 16;
+        margin = 4;
+        maxColor = 255;
+        colorSlope = 32;
+        selectedWidth = 2;
+        regularWidth = 1;
+        emptyText = "EMPTY";
+        emptyI = 0;
+        emptyJ = 9;
+        resetText = "RESET";
+        resetI = 0;
+        resetJ = 10;
+        c = document.getElementById("canvium");
+        c.width = numCells * cellWidth;
+        c.height = (numCells + 3) * cellWidth;
+        c.addEventListener("mousedown", mouseClickOnCanvas);
+        ctx = c.getContext("2d");
+        ctx.font = "16px monospace";
+        resetBoard();
         selected = null;
+        selectedPiece = null;
       }
 
       function calculateThreat() {
@@ -219,6 +264,18 @@
             }
           }
         }
+        ctx.strokeStyle = rgb([0, 0, 0]);
+        ctx.lineWidth = regularWidth;
+        var emptyX = emptyI * cellWidth;
+        var emptyY = emptyJ * cellWidth;
+        var resetX = resetI * cellWidth;
+        var resetY = resetJ * cellWidth;
+        ctx.strokeRect(emptyX, emptyY, cellWidth, cellWidth);
+        ctx.strokeRect(resetX, resetY, cellWidth, cellWidth);
+        ctx.fillStyle = rgb([0, 0, 0]);
+        var textY = (cellWidth + fontSize) / 2;
+        ctx.fillText(emptyText, emptyX + 2 * margin, emptyY + textY);
+        ctx.fillText(resetText, resetX + 2 * margin, resetY + textY);
       }
 
       function updateBoard() {
