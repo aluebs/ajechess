@@ -59,6 +59,32 @@
         }
       }
 
+      class Button {
+        constructor(i, j, text) {
+          this.i = i;
+          this.j = j;
+          this.text = text;
+          this.x = i * cellWidth;
+          this.y = j * cellWidth;
+          this.margin = (7 - text.length) * margin;
+        }
+
+        isClick(i, j) {
+          return i == this.i && j == this.j;
+        }
+
+        draw(backgroundColor, textColor) {
+          ctx.fillStyle = backgroundColor;
+          ctx.fillRect(this.x, this.y, cellWidth, cellWidth);
+          ctx.fillStyle = textColor;
+          ctx.fillText(this.text, this.x + this.margin,
+            this.y + (cellWidth + fontSize) / 2);
+          ctx.strokeStyle = rgb([0, 0, 0]);
+          ctx.lineWidth = regularWidth;
+          ctx.strokeRect(this.x, this.y, cellWidth, cellWidth);
+        }
+      }
+
       function rgb(color) {
         return "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
       }
@@ -134,11 +160,17 @@
             && j - reserveJ >= 0 && j - reserveJ < reserveCols) {
             selected = [i, j];
             update = true;
-          } else if (i == emptyI && j == emptyJ) {
+          } else if (empty.isClick(i, j)) {
             emptyBoard();
             update = true;
-          } else if (i == resetI && j == resetJ) {
+          } else if (reset.isClick(i, j)) {
             resetBoard();
+            update = true;
+          } else if (red.isClick(i, j)) {
+            redSelected = !redSelected;
+            update = true;
+          } else if (blue.isClick(i, j)) {
+            blueSelected = !blueSelected;
             update = true;
           }
         }
@@ -156,12 +188,12 @@
         colorSlope = 32;
         selectedWidth = 2;
         regularWidth = 1;
-        emptyText = "EMPTY";
-        emptyI = 0;
-        emptyJ = 9;
-        resetText = "RESET";
-        resetI = 0;
-        resetJ = 10;
+        empty = new Button(0, 9, "EMPTY");
+        reset = new Button(0, 10, "RESET");
+        red = new Button(1, 9, "RED");
+        blue = new Button(1, 10, "BLUE");
+        redSelected = true;
+        blueSelected = true;
         c = document.getElementById("canvium");
         c.width = numCells * cellWidth;
         c.height = (numCells + 3) * cellWidth;
@@ -260,10 +292,18 @@
             var cellY = j * cellWidth;
             var wt = whiteThreat[i][j];
             var bt = blackThreat[i][j];
-            ctx.fillStyle = rgb([
-              maxColor - colorSlope * wt,
-              maxColor - colorSlope * (wt + bt),
-              maxColor - colorSlope * bt]);
+            var threatColor = [maxColor, maxColor, maxColor];
+            if (redSelected) {
+              var redColor = colorSlope * bt;
+              threatColor = [threatColor[0], threatColor[1] - redColor,
+                threatColor[2] - redColor];
+            }
+            if (blueSelected) {
+              var blueColor = colorSlope * wt;
+              threatColor = [threatColor[0] - blueColor,
+                threatColor[1] - blueColor, threatColor[2]];
+            }
+            ctx.fillStyle = rgb(threatColor);
             ctx.fillRect(cellX, cellY, cellWidth, cellWidth);
             ctx.strokeStyle = rgb([0, 0, 0]);
             ctx.lineWidth = regularWidth;
@@ -281,18 +321,22 @@
             }
           }
         }
-        ctx.strokeStyle = rgb([0, 0, 0]);
-        ctx.lineWidth = regularWidth;
-        var emptyX = emptyI * cellWidth;
-        var emptyY = emptyJ * cellWidth;
-        var resetX = resetI * cellWidth;
-        var resetY = resetJ * cellWidth;
-        ctx.strokeRect(emptyX, emptyY, cellWidth, cellWidth);
-        ctx.strokeRect(resetX, resetY, cellWidth, cellWidth);
-        ctx.fillStyle = rgb([0, 0, 0]);
-        var textY = (cellWidth + fontSize) / 2;
-        ctx.fillText(emptyText, emptyX + 2 * margin, emptyY + textY);
-        ctx.fillText(resetText, resetX + 2 * margin, resetY + textY);
+        empty.draw(rgb([maxColor, maxColor, maxColor]), rgb([0, 0, 0]));
+        reset.draw(rgb([maxColor, maxColor, maxColor]), rgb([0, 0, 0]));
+        if (redSelected) {
+          red.draw(rgb([maxColor, 0, 0]),
+            rgb([maxColor, maxColor, maxColor]));
+        } else {
+          red.draw(rgb([maxColor, maxColor, maxColor]),
+            rgb([maxColor, 0, 0]));
+        }
+        if (blueSelected) {
+          blue.draw(rgb([0, 0, maxColor]),
+            rgb([maxColor, maxColor, maxColor]));
+        } else {
+          blue.draw(rgb([maxColor, maxColor, maxColor]),
+            rgb([0, 0, maxColor]));
+        }
         for (var i = 0; i < reserveRows; ++i) {
           for (var j = 0; j < reserveCols; ++j) {
             var cellX = (i + reserveI) * cellWidth;
