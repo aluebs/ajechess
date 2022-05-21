@@ -329,22 +329,34 @@
             var wt = whiteThreat[i][j];
             var bt = blackThreat[i][j];
             var threatColor = [maxColor, maxColor, maxColor];
-            if (redSelected) {
-              var redColor = colorSlope * Math.max(0, bt - wt);
-              threatColor = [threatColor[0], threatColor[1] - redColor,
-                threatColor[2] - redColor];
-            }
-            if (blueSelected) {
-              var blueColor = colorSlope * Math.max(0, wt - bt);
-              threatColor = [threatColor[0] - blueColor,
-                threatColor[1] - blueColor, threatColor[2]];
+            if (redSelected && blueSelected) {
+              if (wt == 0 && bt == 0) {
+                threatColor = [maxColor, maxColor, maxColor];
+              } else if (wt == 0 && bt > 0) {
+                threatColor = [maxColor, 0, 0];
+              } else if (wt > 0 && bt == 0) {
+                threatColor = [0, 0, maxColor];
+              } else if (wt == bt) {
+                threatColor = [maxColor / 2, 0, maxColor / 2];
+              } else if (wt > bt) {
+                threatColor = [maxColor / 4, 0, 3 * maxColor / 4];
+              } else if (wt < bt) {
+                threatColor = [3 * maxColor / 4, 0, maxColor / 4];
+              }
+            } else if (redSelected) {
+              if (bt > 0) {
+                threatColor = [maxColor, 0, 0];
+              }
+            } else if (blueSelected) {
+              if (wt > 0) {
+                threatColor = [0, 0, maxColor];
+              }
             }
             ctx.fillStyle = rgb(threatColor);
             ctx.fillRect(cellX, cellY, cellWidth, cellWidth);
             var textX = cellX + margin;
-            ctx.fillStyle = rgb([0, 0, maxColor]);
+            ctx.fillStyle = rgb([maxColor, maxColor, maxColor]);
             ctx.fillText(wt.toString(), textX, cellY + cellWidth - margin);
-            ctx.fillStyle = rgb([maxColor, 0, 0]);
             ctx.fillText(bt.toString(), textX, cellY + fontSize);
           }
         }
