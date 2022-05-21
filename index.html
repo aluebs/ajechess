@@ -59,6 +59,73 @@
         }
       }
 
+      class Board {
+        constructor(i, j, board) {
+          this.i = i;
+          this.j = j;
+          this.board = board;
+          this.initialBoard = JSON.parse(JSON.stringify(board));
+          this.rows = board.length;
+          this.cols = board[0].length;
+        }
+
+        get(i, j) {
+          return this.board[i][j];
+        }
+
+        aget(i, j) {
+          return this.get(i - this.i, j - this.j);
+        }
+
+        set(i, j, piece) {
+          this.board[i][j] = piece;
+        }
+
+        aset(i, j, piece) {
+          this.set(i - this.i, j - this.j, piece);
+        }
+
+        indicesInBoard(i, j) {
+          return i >= 0 && i < this.rows && j >= 0 && j < this.cols;
+        }
+
+        positionInBoard(i, j) {
+          return i >= this.i && i < this.i + this.rows
+            && j >= this.j && j < this.j + this.cols;
+        }
+
+        draw() {
+          for (var i = 0; i < this.rows; ++i) {
+            for (var j = 0; j < this.cols; ++j) {
+              var cellX = (i + this.i) * cellWidth;
+              var cellY = (j + this.j) * cellWidth;
+              ctx.strokeStyle = rgb([0, 0, 0]);
+              ctx.lineWidth = regularWidth;
+              ctx.strokeRect(cellX, cellY, cellWidth, cellWidth);
+              var piece = this.board[i][j];
+              if (piece) {
+                var image = new Image();
+                image.onload = onloadDraw(image, cellX, cellY);
+                image.src = piece.image;
+              }
+            }
+          }
+        }
+
+        empty() {
+          for (var i = 0; i < this.rows; ++i) {
+            for (var j = 0; j < this.cols; ++j) {
+              this.board[i][j] = null;
+            }
+          }
+        }
+
+        reset() {
+          this.board = this.initialBoard;
+        }
+
+      }
+
       class Button {
         constructor(i, j, text) {
           this.i = i;
@@ -89,82 +156,42 @@
         return "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
       }
 
-      function emptyBoard() {
-        board = [
-          [null, null, null, null, null, null, null, null],
-          [null, null, null, null, null, null, null, null],
-          [null, null, null, null, null, null, null, null],
-          [null, null, null, null, null, null, null, null],
-          [null, null, null, null, null, null, null, null],
-          [null, null, null, null, null, null, null, null],
-          [null, null, null, null, null, null, null, null],
-          [null, null, null, null, null, null, null, null],
-        ];
-      }
-
-      function resetBoard() {
-        board = [
-          [new Rook(false), new Pawn(false), null, null,
-            null, null, new Pawn(true), new Rook(true)],
-          [new Knight(false), new Pawn(false), null, null,
-            null, null, new Pawn(true), new Knight(true)],
-          [new Bishop(false), new Pawn(false), null, null,
-            null, null, new Pawn(true), new Bishop(true)],
-          [new Queen(false), new Pawn(false), null, null,
-            null, null, new Pawn(true), new Queen(true)],
-          [new King(false), new Pawn(false), null, null,
-            null, null, new Pawn(true), new King(true)],
-          [new Bishop(false), new Pawn(false), null, null,
-            null, null, new Pawn(true), new Bishop(true)],
-          [new Knight(false), new Pawn(false), null, null,
-            null, null, new Pawn(true), new Knight(true)],
-          [new Rook(false), new Pawn(false), null, null,
-            null, null, new Pawn(true), new Rook(true)]
-        ];
-      }
-
       function mouseClickOnCanvas(event) {
         var rect = c.getBoundingClientRect();
         var i = Math.floor((event.clientX - rect.left) / cellWidth);
         var j = Math.floor((event.clientY - rect.top) / cellWidth);
         var update = false;
-        if (i >= 0 && i < numCells && j >= 0 && j < numCells) {
+        if (board.positionInBoard(i, j)) {
           if (selected) {
-            if (selected[0] >= 0 && selected[0] < numCells
-              && selected[1] >= 0 && selected[1] < numCells) {
-              var selectedPiece = board[selected[0]][selected[1]];
-              if (!board[i][j] || board[i][j].isWhite != selectedPiece.isWhite){
-                board[i][j] = selectedPiece;
-                board[selected[0]][selected[1]] = null;
+            if (board.positionInBoard(selected[0], selected[1])) {
+              var piece = board.aget(i, j);
+              var selectedPiece = board.aget(selected[0], selected[1]);
+              if (!piece || piece.isWhite != selectedPiece.isWhite){
+                board.aset(i, j, selectedPiece);
+                board.aset(selected[0], selected[1], null);
               }
-            } else if (selected[0] - reserveI >= 0
-              && selected[0] - reserveI < reserveRows
-              && selected[1] - reserveJ >= 0
-              && selected[1] - reserveJ < reserveCols) {
-              board[i][j] =
-                reserve[selected[0] - reserveI][selected[1] - reserveJ];
+            } else if (reserve.positionInBoard(selected[0], selected[1])) {
+              board.aset(i, j, reserve.aget(selected[0], selected[1]));
             }
             selected = null;
             update = true;
-          } else if (board[i][j]) {
+          } else if (board.aget(i, j)) {
             selected = [i, j];
             update = true;
           }
         } else {
-          if (selected && selected[0] >= 0 && selected[0] < numCells
-            && selected[1] >= 0 && selected[1] < numCells) {
-            board[selected[0]][selected[1]] = null;
+          if (selected && board.positionInBoard(selected[0], selected[1])) {
+            board.aset(selected[0], selected[1], null);
             selected = null;
             update = true;
-          } else if (i - reserveI >= 0 && i - reserveI < reserveRows
-            && j - reserveJ >= 0 && j - reserveJ < reserveCols) {
+          } else if (reserve.positionInBoard(i, j)) {
             selected = [i, j];
             update = true;
           } else if (empty.isClick(i, j)) {
-            emptyBoard();
+            board.empty();
             update = true;
           } else if (reset.isClick(i, j)) {
-            resetBoard();
+            board.reset();
             update = true;
           } else if (red.isClick(i, j)) {
             redSelected = !redSelected;
@@ -188,31 +215,42 @@
         colorSlope = 32;
         selectedWidth = 2;
         regularWidth = 1;
+        board = new Board(0, 0, [
+          [new Rook(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new Rook(true)],
+          [new Knight(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new Knight(true)],
+          [new Bishop(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new Bishop(true)],
+          [new Queen(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new Queen(true)],
+          [new King(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new King(true)],
+          [new Bishop(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new Bishop(true)],
+          [new Knight(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new Knight(true)],
+          [new Rook(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new Rook(true)]]);
         empty = new Button(0, 9, "EMPTY");
         reset = new Button(0, 10, "RESET");
         red = new Button(1, 9, "RED");
         blue = new Button(1, 10, "BLUE");
         redSelected = true;
         blueSelected = true;
+        reserve = new Board(2, 9, [
+          [new Pawn(false), new Pawn(true)],
+          [new Knight(false), new Knight(true)],
+          [new Bishop(false), new Bishop(true)],
+          [new Rook(false), new Rook(true)],
+          [new Queen(false), new Queen(true)],
+          [new King(false), new King(true)]]);
         c = document.getElementById("canvium");
         c.width = numCells * cellWidth;
         c.height = (numCells + 3) * cellWidth;
         c.addEventListener("mousedown", mouseClickOnCanvas);
         ctx = c.getContext("2d");
         ctx.font = "16px monospace";
-        resetBoard();
-        reserveI = 2;
-        reserveJ = 9;
-        reserveRows = 6;
-        reserveCols = 2;
-        reserve = [
-          [new Pawn(false), new Pawn(true)],
-          [new Knight(false), new Knight(true)],
-          [new Bishop(false), new Bishop(true)],
-          [new Rook(false), new Rook(true)],
-          [new Queen(false), new Queen(true)],
-          [new King(false), new King(true)],
-        ];
         selected = null;
       }
 
@@ -237,36 +275,34 @@
           [0, 0, 0, 0, 0, 0, 0, 0],
           [0, 0, 0, 0, 0, 0, 0, 0]
         ];
-        for (var i = 0; i < numCells; ++i) {
-          for (var j = 0; j < numCells; ++j) {
-            var piece = board[i][j];
+        for (var i = 0; i < board.rows; ++i) {
+          for (var j = 0; j < board.cols; ++j) {
+            var piece = board.get(i, j);
             if (piece) {
               for (jump of piece.jumps) {
-                jumpX = i + jump[0];
-                jumpY = j + jump[1];
-                if (jumpX >= 0 && jumpX < numCells
-                  && jumpY >= 0 && jumpY < numCells) {
+                jumpI = i + jump[0];
+                jumpJ = j + jump[1];
+                if (board.indicesInBoard(jumpI, jumpJ)) {
                   if (piece.isWhite) {
-                    ++whiteThreat[jumpX][jumpY];
+                    ++whiteThreat[jumpI][jumpJ];
                   } else {
-                    ++blackThreat[jumpX][jumpY];
+                    ++blackThreat[jumpI][jumpJ];
                   }
                 }
               }
               for (direction of piece.directions) {
                 for (var k = 1; k < numCells; ++k){
-                  dirX = i + k * direction[0];
-                  dirY = j + k * direction[1];
-                  if (dirX < 0 || dirX >= numCells
-                    || dirY < 0 || dirY >= numCells) {
+                  dirI = i + k * direction[0];
+                  dirJ = j + k * direction[1];
+                  if (!board.indicesInBoard(dirI, dirJ)) {
                     break;
                   }
                   if (piece.isWhite) {
-                    ++whiteThreat[dirX][dirY];
+                    ++whiteThreat[dirI][dirJ];
                   } else {
-                    ++blackThreat[dirX][dirY];
+                    ++blackThreat[dirI][dirJ];
                   }
-                  if (board[dirX][dirY]) {
+                  if (board.get(dirI, dirJ)) {
                     break;
                   }
                 }
@@ -286,10 +322,10 @@
       }
 
       function drawBoard() {
-        for (var i = 0; i < numCells; ++i) {
-          for (var j = 0; j < numCells; ++j) {
-            var cellX = i * cellWidth;
-            var cellY = j * cellWidth;
+        for (var i = 0; i < board.rows; ++i) {
+          for (var j = 0; j < board.cols; ++j) {
+            var cellX = (i + board.i) * cellWidth;
+            var cellY = (j + board.j) * cellWidth;
             var wt = whiteThreat[i][j];
             var bt = blackThreat[i][j];
             var threatColor = [maxColor, maxColor, maxColor];
@@ -305,22 +341,14 @@
             }
             ctx.fillStyle = rgb(threatColor);
             ctx.fillRect(cellX, cellY, cellWidth, cellWidth);
-            ctx.strokeStyle = rgb([0, 0, 0]);
-            ctx.lineWidth = regularWidth;
-            ctx.strokeRect(cellX, cellY, cellWidth, cellWidth);
             var textX = cellX + margin;
             ctx.fillStyle = rgb([0, 0, maxColor]);
             ctx.fillText(wt.toString(), textX, cellY + cellWidth - margin);
             ctx.fillStyle = rgb([maxColor, 0, 0]);
             ctx.fillText(bt.toString(), textX, cellY + fontSize);
-            var piece = board[i][j];
-            if (piece) {
-              var image = new Image();
-              image.onload = onloadDraw(image, cellX, cellY);
-              image.src = piece.image;
-            }
           }
         }
+        board.draw();
         empty.draw(rgb([maxColor, maxColor, maxColor]), rgb([0, 0, 0]));
         reset.draw(rgb([maxColor, maxColor, maxColor]), rgb([0, 0, 0]));
         if (redSelected) {
@@ -337,16 +365,7 @@
           blue.draw(rgb([maxColor, maxColor, maxColor]),
             rgb([0, 0, maxColor]));
         }
-        for (var i = 0; i < reserveRows; ++i) {
-          for (var j = 0; j < reserveCols; ++j) {
-            var cellX = (i + reserveI) * cellWidth;
-            var cellY = (j + reserveJ) * cellWidth;
-            ctx.strokeRect(cellX, cellY, cellWidth, cellWidth);
-            var image = new Image();
-            image.onload = onloadDraw(image, cellX, cellY);
-            image.src = reserve[i][j].image;
-          }
-        }
+        reserve.draw();
         if (selected) {
           ctx.strokeStyle = rgb([0, maxColor, 0]);
           ctx.lineWidth = selectedWidth;
