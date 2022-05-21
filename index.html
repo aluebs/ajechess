@@ -330,12 +330,12 @@
             var bt = blackThreat[i][j];
             var threatColor = [maxColor, maxColor, maxColor];
             if (redSelected) {
-              var redColor = colorSlope * bt;
+              var redColor = colorSlope * Math.max(0, bt - wt);
               threatColor = [threatColor[0], threatColor[1] - redColor,
                 threatColor[2] - redColor];
             }
             if (blueSelected) {
-              var blueColor = colorSlope * wt;
+              var blueColor = colorSlope * Math.max(0, wt - bt);
               threatColor = [threatColor[0] - blueColor,
                 threatColor[1] - blueColor, threatColor[2]];
             }
