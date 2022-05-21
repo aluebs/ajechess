@@ -3,6 +3,49 @@
   <head>
     <title>Ajechess</title>
     <script>
+      class Piece {
+        constructor(isWhite, image) {
+          this.image = "src/ajechess/iconos/" + (isWhite ? "blanco" : "negro")
+            + "/" + image + ".png";
+        }
+      }
+
+      class Pawn extends Piece {
+        constructor(isWhite) {
+          super(isWhite, "peon");
+        }
+      }
+
+      class Bishop extends Piece {
+        constructor(isWhite) {
+          super(isWhite, "alfil");
+        }
+      }
+
+      class Knight extends Piece {
+        constructor(isWhite) {
+          super(isWhite, "caballo");
+        }
+      }
+
+      class Rook extends Piece {
+        constructor(isWhite) {
+          super(isWhite, "torre");
+        }
+      }
+
+      class Queen extends Piece {
+        constructor(isWhite) {
+          super(isWhite, "dama");
+        }
+      }
+
+      class King extends Piece {
+        constructor(isWhite) {
+          super(isWhite, "rey");
+        }
+      }
+
       function rgb(color) {
         return "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
       }
@@ -36,7 +79,7 @@
         ctx.putImageData(imgData, 0, 0);
       }
 
-      function initCanvas() {
+      function initBoard() {
         cellWidth = 64;
         numCells = 8;
         c = document.getElementById("canvium");
@@ -44,6 +87,34 @@
         c.height = numCells * cellWidth;
         ctx = c.getContext("2d");
         boardArray = canvas2Array(c);
+        board = [
+          [new Rook(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new Rook(true)],
+          [new Knight(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new Knight(true)],
+          [new Bishop(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new Bishop(true)],
+          [new Queen(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new Queen(true)],
+          [new King(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new King(true)],
+          [new Bishop(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new Bishop(true)],
+          [new Knight(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new Knight(true)],
+          [new Rook(false), new Pawn(false), null, null,
+            null, null, new Pawn(true), new Rook(true)]
+        ];
+      }
+
+      function onloadDraw(image, i, j) {
+        var localImage = image;
+        var localI = i;
+        var localJ = j;
+        return function () {
+          ctx.drawImage(localImage, localI * cellWidth,
+            localJ * cellWidth, cellWidth, cellWidth);
+        }
       }
 
       function drawCheckerBoard() {
@@ -52,12 +123,17 @@
             ctx.fillStyle =
               rgb((i + j) % 2 ? [192, 192, 192] : [255, 255, 255]);
             ctx.fillRect(i * cellWidth, j * cellWidth, cellWidth, cellWidth);
+            if (board[i][j]) {
+              var image = new Image();
+              image.onload = onloadDraw(image, i, j);
+              image.src = board[i][j].image;
+            }
           }
         }
       }
 
       function onload() {
-        initCanvas();
+        initBoard();
         drawCheckerBoard();
       }
     </script>
