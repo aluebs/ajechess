@@ -5,14 +5,18 @@
     <script>
       class Piece {
         constructor(isWhite, image) {
+          this.isWhite = isWhite;
           this.image = "src/ajechess/iconos/" + (isWhite ? "blanco" : "negro")
             + "/" + image + ".png";
+          this.jumps = [];
         }
       }
 
       class Pawn extends Piece {
         constructor(isWhite) {
           super(isWhite, "peon");
+          var direction = isWhite ? -1 : 1;
+          this.jumps = [[1, direction], [-1, direction]];
         }
       }
 
@@ -25,6 +29,8 @@
       class Knight extends Piece {
         constructor(isWhite) {
           super(isWhite, "caballo");
+          this.jumps = [[2, 1], [2, -1], [1, 2], [1, -2],
+            [-2, 1], [-2, -1], [-1, 2], [-1, -2]];
         }
       }
 
@@ -43,6 +49,8 @@
       class King extends Piece {
         constructor(isWhite) {
           super(isWhite, "rey");
+          this.jumps = [[1, 1], [1, 0], [1, -1], [0, 1],
+            [0, -1], [-1, 1], [-1, 0], [-1, -1]];
         }
       }
 
@@ -50,43 +58,16 @@
         return "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
       }
 
-      function canvas2Array(cvs) {
-        var imgData = ctx.getImageData(0, 0, cvs.width, cvs.height).data;
-        var imgArray = new Array(cvs.width);
-        for (var i = 0; i < imgArray.length; ++i) {
-          imgArray[i] = new Array(cvs.height);
-          for (var j = 0; j < imgArray[i].length; ++j) {
-            imgArray[i][j] = new Array(3);
-            for (var k = 0; k < 3; ++k) {
-              imgArray[i][j][k] = imgData[4 * (i + j * cvs.width) + k];
-            }
-          }
-        }
-        return imgArray;
-      }
-
-      function array2Canvas(imgArray) {
-        var imgData = ctx.createImageData(imgArray.length, imgArray[0].length);
-        for (var i = 0; i < imgArray.length; ++i) {
-          for (var j = 0; j < imgArray[i].length; ++j) {
-            for (var k = 0; k < 3; ++k) {
-              imgData.data[4 * (i + j * imgArray.length) + k] =
-                imgArray[i][j][k];
-            }
-            imgData.data[4 * (i + j * imgArray.length) + 3] = 255;
-          }
-        }
-        ctx.putImageData(imgData, 0, 0);
-      }
-
       function initBoard() {
         cellWidth = 64;
         numCells = 8;
+        fontSize = 16;
+        margin = 4;
         c = document.getElementById("canvium");
         c.width = numCells * cellWidth;
         c.height = numCells * cellWidth;
         ctx = c.getContext("2d");
-        boardArray = canvas2Array(c);
+        ctx.font = "16px monospace";
         board = [
           [new Rook(false), new Pawn(false), null, null,
             null, null, new Pawn(true), new Rook(true)],
@@ -105,6 +86,50 @@
           [new Rook(false), new Pawn(false), null, null,
             null, null, new Pawn(true), new Rook(true)]
         ];
+        whiteThreat = [
+          [0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0]
+        ];
+        blackThreat = [
+          [0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0]
+        ];
+      }
+
+      function calculateThreat() {
+        for (var i = 0; i < numCells; ++i) {
+          for (var j = 0; j < numCells; ++j) {
+            var piece = board[i][j];
+            if (piece) {
+              var jumps = piece.jumps;
+              for (var k = 0; k < jumps.length; ++k) {
+                jump = jumps[k];
+                jumpX = i + jump[0];
+                jumpY = j + jump[1];
+                if (jumpX >= 0 && jumpX < numCells
+                  && jumpY >= 0 && jumpY < numCells) {
+                  if (piece.isWhite) {
+                    ++whiteThreat[jumpX][jumpY];
+                  } else {
+                    ++blackThreat[jumpX][jumpY];
+                  }
+                }
+              }
+            }
+          }
+        }
       }
 
       function onloadDraw(image, i, j) {
@@ -117,16 +142,21 @@
         }
       }
 
-      function drawCheckerBoard() {
+      function drawBoard() {
         for (var i = 0; i < numCells; ++i) {
           for (var j = 0; j < numCells; ++j) {
-            ctx.fillStyle =
-              rgb((i + j) % 2 ? [192, 192, 192] : [255, 255, 255]);
-            ctx.fillRect(i * cellWidth, j * cellWidth, cellWidth, cellWidth);
-            if (board[i][j]) {
+            var cellX = i * cellWidth;
+            var cellY = j * cellWidth;
+            ctx.strokeRect(cellX, cellY, cellWidth, cellWidth);
+            ctx.fillText(whiteThreat[i][j].toString(),
+              cellX + margin, cellY + cellWidth - margin);
+            ctx.fillText(blackThreat[i][j].toString(),
+              cellX + margin, cellY + fontSize);
+            var piece = board[i][j];
+            if (piece) {
               var image = new Image();
               image.onload = onloadDraw(image, i, j);
-              image.src = board[i][j].image;
+              image.src = piece.image;
             }
           }
         }
@@ -134,7 +164,8 @@
 
       function onload() {
         initBoard();
-        drawCheckerBoard();
+        calculateThreat();
+        drawBoard();
       }
     </script>
   </head>
