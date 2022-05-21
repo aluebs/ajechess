@@ -93,6 +93,7 @@
         c.width = numCells * cellWidth;
         c.height = numCells * cellWidth;
         c.addEventListener("mousedown", mouseClickOnCanvas);
+        c.addEventListener("touchstart", mouseClickOnCanvas);
         ctx = c.getContext("2d");
         ctx.font = "16px monospace";
         board = [
