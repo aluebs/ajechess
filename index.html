@@ -68,6 +68,8 @@
         numCells = 8;
         fontSize = 16;
         margin = 4;
+        maxColor = 255;
+        colorSlope = 32;
         c = document.getElementById("canvium");
         c.width = numCells * cellWidth;
         c.height = numCells * cellWidth;
@@ -169,10 +171,18 @@
             var cellX = i * cellWidth;
             var cellY = j * cellWidth;
             ctx.strokeRect(cellX, cellY, cellWidth, cellWidth);
-            ctx.fillText(whiteThreat[i][j].toString(),
-              cellX + margin, cellY + cellWidth - margin);
-            ctx.fillText(blackThreat[i][j].toString(),
-              cellX + margin, cellY + fontSize);
+            var wt = whiteThreat[i][j];
+            var bt = blackThreat[i][j];
+            ctx.fillStyle = rgb([
+              maxColor - colorSlope * wt,
+              maxColor - colorSlope * (wt + bt),
+              maxColor - colorSlope * bt]);
+            ctx.fillRect(cellX + 1, cellY + 1, cellWidth - 2, cellWidth - 2);
+            var textX = cellX + margin;
+            ctx.fillStyle = rgb([0, 0, maxColor]);
+            ctx.fillText(wt.toString(), textX, cellY + cellWidth - margin);
+            ctx.fillStyle = rgb([maxColor, 0, 0]);
+            ctx.fillText(bt.toString(), textX, cellY + fontSize);
             var piece = board[i][j];
             if (piece) {
               var image = new Image();
