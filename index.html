@@ -36,26 +36,33 @@
         ctx.putImageData(imgData, 0, 0);
       }
 
-      function loadReader(event) {
-        img = new Image();
-        img.onload = loadImage;
-        img.src = event.target.result;
+      function initCanvas() {
+        cellWidth = 64;
+        numCells = 8;
+        c = document.getElementById("canvium");
+        c.width = numCells * cellWidth;
+        c.height = numCells * cellWidth;
+        ctx = c.getContext("2d");
+        boardArray = canvas2Array(c);
       }
 
-      function handleImage(e) {
-        ctx = c.getContext("2d");
-        var reader = new FileReader();
-        reader.onload = loadReader;
-        reader.readAsDataURL(e.files[0]);
+      function drawCheckerBoard() {
+        for (var i = 0; i < numCells; ++i) {
+          for (var j = 0; j < numCells; ++j) {
+            ctx.fillStyle =
+              rgb((i + j) % 2 ? [192, 192, 192] : [255, 255, 255]);
+            ctx.fillRect(i * cellWidth, j * cellWidth, cellWidth, cellWidth);
+          }
+        }
       }
 
       function onload() {
-        c = document.getElementById("canvium");
+        initCanvas();
+        drawCheckerBoard();
       }
     </script>
   </head>
   <body onload="onload()">
-    <h1>Ajechess</h1>
     <canvas id="canvium"></canvas>
   </body>
 </html>
