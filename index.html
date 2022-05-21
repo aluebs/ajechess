@@ -337,11 +337,11 @@
               } else if (wt > 0 && bt == 0) {
                 threatColor = [0, 0, maxColor];
               } else if (wt == bt) {
-                threatColor = [maxColor / 2, 0, maxColor / 2];
+                threatColor = [0.75 * maxColor, 0, 0.75 * maxColor];
               } else if (wt > bt) {
-                threatColor = [maxColor / 4, 0, 3 * maxColor / 4];
+                threatColor = [0.5 * maxColor, 0, maxColor];
               } else if (wt < bt) {
-                threatColor = [3 * maxColor / 4, 0, maxColor / 4];
+                threatColor = [maxColor, 0, 0.5 * maxColor];
               }
             } else if (redSelected) {
               if (bt > 0) {
