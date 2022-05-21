@@ -104,23 +104,35 @@
         var update = false;
         if (i >= 0 && i < numCells && j >= 0 && j < numCells) {
           if (selected) {
-            if (!board[i][j] || board[i][j].isWhite != selectedPiece.isWhite){
-              board[i][j] = selectedPiece;
-              board[selected[0]][selected[1]] = null;
+            if (selected[0] >= 0 && selected[0] < numCells
+              && selected[1] >= 0 && selected[1] < numCells) {
+              var selectedPiece = board[selected[0]][selected[1]];
+              if (!board[i][j] || board[i][j].isWhite != selectedPiece.isWhite){
+                board[i][j] = selectedPiece;
+                board[selected[0]][selected[1]] = null;
+              }
+            } else if (selected[0] - reserveI >= 0
+              && selected[0] - reserveI < reserveRows
+              && selected[1] - reserveJ >= 0
+              && selected[1] - reserveJ < reserveCols) {
+              board[i][j] =
+                reserve[selected[0] - reserveI][selected[1] - reserveJ];
             }
             selected = null;
-            selectedPiece = null;
             update = true;
           } else if (board[i][j]) {
             selected = [i, j];
-            selectedPiece = board[i][j];
             update = true;
           }
         } else {
-          if (selected) {
+          if (selected && selected[0] >= 0 && selected[0] < numCells
+            && selected[1] >= 0 && selected[1] < numCells) {
             board[selected[0]][selected[1]] = null;
             selected = null;
-            selectedPiece = null;
+            update = true;
+          } else if (i - reserveI >= 0 && i - reserveI < reserveRows
+            && j - reserveJ >= 0 && j - reserveJ < reserveCols) {
+            selected = [i, j];
             update = true;
           } else if (i == emptyI && j == emptyJ) {
             emptyBoard();
@@ -157,8 +169,19 @@
         ctx = c.getContext("2d");
         ctx.font = "16px monospace";
         resetBoard();
+        reserveI = 2;
+        reserveJ = 9;
+        reserveRows = 6;
+        reserveCols = 2;
+        reserve = [
+          [new Pawn(false), new Pawn(true)],
+          [new Knight(false), new Knight(true)],
+          [new Bishop(false), new Bishop(true)],
+          [new Rook(false), new Rook(true)],
+          [new Queen(false), new Queen(true)],
+          [new King(false), new King(true)],
+        ];
         selected = null;
-        selectedPiece = null;
       }
 
       function calculateThreat() {
@@ -221,13 +244,12 @@
         }
       }
 
-      function onloadDraw(image, i, j) {
+      function onloadDraw(image, x, y) {
         var localImage = image;
-        var localI = i;
-        var localJ = j;
+        var localX = x;
+        var localY = y;
         return function () {
-          ctx.drawImage(localImage, localI * cellWidth,
-            localJ * cellWidth, cellWidth, cellWidth);
+          ctx.drawImage(localImage, localX, localY, cellWidth, cellWidth);
         }
       }
 
@@ -243,13 +265,8 @@
               maxColor - colorSlope * (wt + bt),
               maxColor - colorSlope * bt]);
             ctx.fillRect(cellX, cellY, cellWidth, cellWidth);
-            if (selected && selected[0] == i && selected[1] == j) {
-              ctx.strokeStyle = rgb([0, maxColor, 0]);
-              ctx.lineWidth = selectedWidth;
-            } else {
-              ctx.strokeStyle = rgb([0, 0, 0]);
-              ctx.lineWidth = regularWidth;
-            }
+            ctx.strokeStyle = rgb([0, 0, 0]);
+            ctx.lineWidth = regularWidth;
             ctx.strokeRect(cellX, cellY, cellWidth, cellWidth);
             var textX = cellX + margin;
             ctx.fillStyle = rgb([0, 0, maxColor]);
@@ -259,7 +276,7 @@
             var piece = board[i][j];
             if (piece) {
               var image = new Image();
-              image.onload = onloadDraw(image, i, j);
+              image.onload = onloadDraw(image, cellX, cellY);
               image.src = piece.image;
             }
           }
@@ -276,6 +293,22 @@
         var textY = (cellWidth + fontSize) / 2;
         ctx.fillText(emptyText, emptyX + 2 * margin, emptyY + textY);
         ctx.fillText(resetText, resetX + 2 * margin, resetY + textY);
+        for (var i = 0; i < reserveRows; ++i) {
+          for (var j = 0; j < reserveCols; ++j) {
+            var cellX = (i + reserveI) * cellWidth;
+            var cellY = (j + reserveJ) * cellWidth;
+            ctx.strokeRect(cellX, cellY, cellWidth, cellWidth);
+            var image = new Image();
+            image.onload = onloadDraw(image, cellX, cellY);
+            image.src = reserve[i][j].image;
+          }
+        }
+        if (selected) {
+          ctx.strokeStyle = rgb([0, maxColor, 0]);
+          ctx.lineWidth = selectedWidth;
+          ctx.strokeRect(selected[0] * cellWidth, selected[1] * cellWidth,
+            cellWidth, cellWidth);
+        }
       }
 
       function updateBoard() {
