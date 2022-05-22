@@ -9,6 +9,7 @@
           this.image = "src/ajechess/iconos/" + (isWhite ? "blanco" : "negro")
             + "/" + image + ".png";
           this.jumps = [];
+          this.takes = [];
           this.directions = [];
         }
       }
@@ -17,7 +18,8 @@
         constructor(isWhite) {
           super(isWhite, "peon");
           var direction = isWhite ? -1 : 1;
-          this.jumps = [[1, direction], [-1, direction]];
+          this.jumps = [[0, direction]];
+          this.takes = [[1, direction], [-1, direction]];
         }
       }
 
@@ -32,6 +34,8 @@
         constructor(isWhite) {
           super(isWhite, "caballo");
           this.jumps = [[2, 1], [2, -1], [1, 2], [1, -2],
+            [-2, 1], [-2, -1], [-1, 2], [-1, -2]];
+          this.takes = [[2, 1], [2, -1], [1, 2], [1, -2],
             [-2, 1], [-2, -1], [-1, 2], [-1, -2]];
         }
       }
@@ -55,6 +59,8 @@
         constructor(isWhite) {
           super(isWhite, "rey");
           this.jumps = [[1, 1], [1, 0], [1, -1], [0, 1],
+            [0, -1], [-1, 1], [-1, 0], [-1, -1]];
+          this.takes = [[1, 1], [1, 0], [1, -1], [0, 1],
             [0, -1], [-1, 1], [-1, 0], [-1, -1]];
         }
       }
@@ -121,7 +127,7 @@
         }
 
         reset() {
-          this.board = this.initialBoard;
+          this.board = JSON.parse(JSON.stringify(this.initialBoard));
         }
 
       }
@@ -215,12 +221,12 @@
         regularWidth = 1;
         colorWhite = rgb([255, 255, 255]);
         colorBlack = rgb([0, 0, 0]);
-        colorRed = rgb([255, 0, 0]);
-        colorRedish = rgb([191, 0, 127]);
-        colorPurple = rgb([127, 0, 255]);
-        colorBlueish = rgb([63, 15, 255]);
-        colorBlue = rgb([0, 32, 255]);
-        colorYellow = rgb([255, 255, 0]);
+        colorRed = rgb([255, 31, 0]);
+        colorRedish = rgb([255, 15, 127]);
+        colorPurple = rgb([255, 0, 255]);
+        colorBlueish = rgb([127, 31, 255]);
+        colorBlue = rgb([0, 63, 255]);
+        colorGreen = rgb([0, 255, 0]);
         board = new Board(0, 0, [
           [new Rook(false), new Pawn(false), null, null,
             null, null, new Pawn(true), new Rook(true)],
@@ -285,14 +291,14 @@
           for (var j = 0; j < board.cols; ++j) {
             var piece = board.get(i, j);
             if (piece) {
-              for (jump of piece.jumps) {
-                jumpI = i + jump[0];
-                jumpJ = j + jump[1];
-                if (board.indicesInBoard(jumpI, jumpJ)) {
+              for (take of piece.takes) {
+                takeI = i + take[0];
+                takeJ = j + take[1];
+                if (board.indicesInBoard(takeI, takeJ)) {
                   if (piece.isWhite) {
-                    ++whiteThreat[jumpI][jumpJ];
+                    ++whiteThreat[takeI][takeJ];
                   } else {
-                    ++blackThreat[jumpI][jumpJ];
+                    ++blackThreat[takeI][takeJ];
                   }
                 }
               }
@@ -369,10 +375,35 @@
         }
         reserve.draw();
         if (selected) {
-          ctx.strokeStyle = colorYellow;
+          ctx.strokeStyle = colorGreen;
           ctx.lineWidth = selectedWidth;
           ctx.strokeRect(selected[0] * cellWidth, selected[1] * cellWidth,
             cellWidth, cellWidth);
+          if (board.positionInBoard(selected[0], selected[1])) {
+            var piece = board.get(selected[0], selected[1]);
+            for (jump of piece.jumps) {
+              jumpI = selected[0] + jump[0];
+              jumpJ = selected[1] + jump[1];
+              if (board.positionInBoard(jumpI, jumpJ)) {
+                ctx.strokeRect(jumpI * cellWidth, jumpJ * cellWidth,
+                  cellWidth, cellWidth);
+              }
+            }
+            for (direction of piece.directions) {
+              for (var k = 1; k < numCells; ++k){
+                dirI = selected[0] + k * direction[0];
+                dirJ = selected[1] + k * direction[1];
+                if (!board.positionInBoard(dirI, dirJ)) {
+                  break;
+                }
+                ctx.strokeRect(dirI * cellWidth, dirJ * cellWidth,
+                  cellWidth, cellWidth);
+                if (board.aget(dirI, dirJ)) {
+                  break;
+                }
+              }
+            }
+          }
         }
       }
 
