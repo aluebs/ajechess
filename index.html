@@ -211,10 +211,16 @@
         numCells = 8;
         fontSize = 16;
         margin = 4;
-        maxColor = 255;
-        colorSlope = 32;
         selectedWidth = 2;
         regularWidth = 1;
+        colorWhite = rgb([255, 255, 255]);
+        colorBlack = rgb([0, 0, 0]);
+        colorRed = rgb([255, 64, 0]);
+        colorRedish = rgb([255, 64, 127]);
+        colorPurple = rgb([191, 64, 191]);
+        colorBlueish = rgb([127, 64, 255]);
+        colorBlue = rgb([0, 64, 255]);
+        colorYellow = rgb([255, 255, 0]);
         board = new Board(0, 0, [
           [new Rook(false), new Pawn(false), null, null,
             null, null, new Pawn(true), new Rook(true)],
@@ -328,46 +334,42 @@
             var cellY = (j + board.j) * cellWidth;
             var wt = whiteThreat[i][j];
             var bt = blackThreat[i][j];
-            var threatColor = [maxColor, maxColor, maxColor];
             if ((!blueSelected || !wt) && redSelected && bt) {
-              threatColor = [maxColor, 0, 0];
+              ctx.fillStyle = colorRed;
             } else if (blueSelected && wt && (!redSelected || !bt)) {
-              threatColor = [0, 0, maxColor];
+              ctx.fillStyle = colorBlue;
             } else if (blueSelected && wt && redSelected && bt && wt == bt) {
-              threatColor = [0.75 * maxColor, 0, 0.75 * maxColor];
+              ctx.fillStyle = colorPurple;
             } else if (blueSelected && wt && redSelected && bt && wt > bt) {
-              threatColor = [0.5 * maxColor, 0, maxColor];
+              ctx.fillStyle = colorBlueish;
             } else if (blueSelected && wt && redSelected && bt && wt < bt) {
-              threatColor = [maxColor, 0, 0.5 * maxColor];
+              ctx.fillStyle = colorRedish;
+            } else {
+              ctx.fillStyle = colorWhite;
             }
-            ctx.fillStyle = rgb(threatColor);
             ctx.fillRect(cellX, cellY, cellWidth, cellWidth);
             var textX = cellX + margin;
-            ctx.fillStyle = rgb([maxColor, maxColor, maxColor]);
+            ctx.fillStyle = colorWhite;
             ctx.fillText(wt.toString(), textX, cellY + cellWidth - margin);
             ctx.fillText(bt.toString(), textX, cellY + fontSize);
           }
         }
         board.draw();
-        empty.draw(rgb([maxColor, maxColor, maxColor]), rgb([0, 0, 0]));
-        reset.draw(rgb([maxColor, maxColor, maxColor]), rgb([0, 0, 0]));
+        empty.draw(colorWhite, colorBlack);
+        reset.draw(colorWhite, colorBlack);
         if (redSelected) {
-          red.draw(rgb([maxColor, 0, 0]),
-            rgb([maxColor, maxColor, maxColor]));
+          red.draw(colorRed, colorWhite);
         } else {
-          red.draw(rgb([maxColor, maxColor, maxColor]),
-            rgb([maxColor, 0, 0]));
+          red.draw(colorWhite, colorRed);
         }
         if (blueSelected) {
-          blue.draw(rgb([0, 0, maxColor]),
-            rgb([maxColor, maxColor, maxColor]));
+          blue.draw(colorBlue, colorWhite);
         } else {
-          blue.draw(rgb([maxColor, maxColor, maxColor]),
-            rgb([0, 0, maxColor]));
+          blue.draw(colorWhite, colorBlue);
         }
         reserve.draw();
         if (selected) {
-          ctx.strokeStyle = rgb([0, maxColor, 0]);
+          ctx.strokeStyle = colorYellow;
           ctx.lineWidth = selectedWidth;
           ctx.strokeRect(selected[0] * cellWidth, selected[1] * cellWidth,
             cellWidth, cellWidth);
