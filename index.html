@@ -329,28 +329,16 @@
             var wt = whiteThreat[i][j];
             var bt = blackThreat[i][j];
             var threatColor = [maxColor, maxColor, maxColor];
-            if (redSelected && blueSelected) {
-              if (wt == 0 && bt == 0) {
-                threatColor = [maxColor, maxColor, maxColor];
-              } else if (wt == 0 && bt > 0) {
-                threatColor = [maxColor, 0, 0];
-              } else if (wt > 0 && bt == 0) {
-                threatColor = [0, 0, maxColor];
-              } else if (wt == bt) {
-                threatColor = [0.75 * maxColor, 0, 0.75 * maxColor];
-              } else if (wt > bt) {
-                threatColor = [0.5 * maxColor, 0, maxColor];
-              } else if (wt < bt) {
-                threatColor = [maxColor, 0, 0.5 * maxColor];
-              }
-            } else if (redSelected) {
-              if (bt > 0) {
-                threatColor = [maxColor, 0, 0];
-              }
-            } else if (blueSelected) {
-              if (wt > 0) {
-                threatColor = [0, 0, maxColor];
-              }
+            if ((!blueSelected || !wt) && redSelected && bt) {
+              threatColor = [maxColor, 0, 0];
+            } else if (blueSelected && wt && (!redSelected || !bt)) {
+              threatColor = [0, 0, maxColor];
+            } else if (blueSelected && wt && redSelected && bt && wt == bt) {
+              threatColor = [0.75 * maxColor, 0, 0.75 * maxColor];
+            } else if (blueSelected && wt && redSelected && bt && wt > bt) {
+              threatColor = [0.5 * maxColor, 0, maxColor];
+            } else if (blueSelected && wt && redSelected && bt && wt < bt) {
+              threatColor = [maxColor, 0, 0.5 * maxColor];
             }
             ctx.fillStyle = rgb(threatColor);
             ctx.fillRect(cellX, cellY, cellWidth, cellWidth);
