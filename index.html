@@ -290,14 +290,17 @@
         for (var i = 0; i < board.rows; ++i) {
           for (var j = 0; j < board.cols; ++j) {
             var piece = board.get(i, j);
-            if (piece) {
+            if (piece && !(selected && i == selected[0] && j == selected[1])) {
               for (take of piece.takes) {
                 takeI = i + take[0];
                 takeJ = j + take[1];
                 if (board.indicesInBoard(takeI, takeJ)) {
-                  if (piece.isWhite) {
+                  var threatened = board.get(takeI, takeJ);
+                  if (piece.isWhite
+                    && !(threatened instanceof King && threatened.isWhite)) {
                     ++whiteThreat[takeI][takeJ];
-                  } else {
+                  } else if (!piece.isWhite &&
+                    !(threatened instanceof King && !threatened.isWhite)) {
                     ++blackThreat[takeI][takeJ];
                   }
                 }
@@ -309,12 +312,16 @@
                   if (!board.indicesInBoard(dirI, dirJ)) {
                     break;
                   }
-                  if (piece.isWhite) {
+                  var threatened = board.get(dirI, dirJ);
+                  if (piece.isWhite
+                    && !(threatened instanceof King && threatened.isWhite)) {
                     ++whiteThreat[dirI][dirJ];
-                  } else {
+                  } else if (!piece.isWhite &&
+                    !(threatened instanceof King && !threatened.isWhite)) {
                     ++blackThreat[dirI][dirJ];
                   }
-                  if (board.get(dirI, dirJ)) {
+                  if (board.get(dirI, dirJ) &&
+                    !(selected && dirI == selected[0] && dirJ == selected[1])) {
                     break;
                   }
                 }
